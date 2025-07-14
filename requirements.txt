@@ -5,3 +5,4 @@ langchain
 faiss-cpu
 pypdf
 pandas
+pdfplumber
