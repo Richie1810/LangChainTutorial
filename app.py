@@ -6,7 +6,8 @@ from qa_chain import load_and_build_qa_chain
 
 # --- 初期設定 ---
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+# api_key = os.getenv("OPENAI_API_KEY")
+api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=api_key)
 
 st.set_page_config(page_title="NTTデータAIアシスタント", layout="centered")
