@@ -5,4 +5,4 @@ langchain
 faiss-cpu
 pypdf
 pandas
-pdfminer.six
+langchain-community
