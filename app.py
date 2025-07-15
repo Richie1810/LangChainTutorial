@@ -10,8 +10,8 @@ load_dotenv()
 api_key = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=api_key)
 
-st.set_page_config(page_title="NTTデータAIアシスタント", layout="centered")
-st.title("LangChainでチャットボットを作ってみる")
+st.set_page_config(page_title="LangChain Tutorial", layout="centered")
+st.title("OpenAIのAPIを使ってみる")
 
 # --- タブ構成（IR質問 / 画像生成） ---
 tab1, tab2 = st.tabs(["📄 IR資料に質問", "🎨 画像を生成"])
