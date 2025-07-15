@@ -29,41 +29,48 @@ def embed_documents_in_batches(docs, embeddings, batch_size=100, delay=30):
     return vectors
 
 def load_and_build_qa_chain():
-    # --- PDF ---
-    pdf_documents = []
-    for file in glob.glob("pdfs/*.pdf"):
-        loader = PyPDFLoader(file)
-        pdf_documents.extend(loader.load())
+    # --- すでに保存済みのベクトルストアがあるか確認 ---
+    if os.path.exists("faiss_index"):
+        vectorstore = FAISS.load_local("faiss_index", OpenAIEmbeddings(openai_api_key=api_key))
+    else:
+        # --- PDF ---
+        pdf_documents = []
+        for file in glob.glob("pdfs/*.pdf"):
+            loader = PyPDFLoader(file)
+            pdf_documents.extend(loader.load())
 
-    # --- Excel ---
-    excel_documents = []
-    for file in glob.glob("excels/*.xlsx"):
-        df = pd.read_excel(file)
-        text = df.to_string(index=False)
-        doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
-        excel_documents.append(doc)
+        # --- Excel ---
+        excel_documents = []
+        for file in glob.glob("excels/*.xlsx"):
+            df = pd.read_excel(file)
+            text = df.to_string(index=False)
+            doc = Document(page_content=text, metadata={"source": os.path.basename(file)})
+            excel_documents.append(doc)
 
-    all_documents = pdf_documents + excel_documents
+        all_documents = pdf_documents + excel_documents
 
-    # --- チャンク処理 ---
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    docs = splitter.split_documents(all_documents)
+        # --- チャンク処理 ---
+        splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        docs = splitter.split_documents(all_documents)
 
-    # --- Embedding & VectorStore構築 ---
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+        # --- Embedding & VectorStore構築 ---
+        embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+        vectors = embed_documents_in_batches(docs, embeddings, batch_size=100)
 
-    vectors = embed_documents_in_batches(docs, embeddings, batch_size=100)
+        texts = [doc.page_content for doc in docs]
+        text_embeddings = list(zip(texts, vectors))
+        metadatas = [doc.metadata for doc in docs]
 
-    texts = [doc.page_content for doc in docs]
-    text_embeddings = list(zip(texts, vectors))
-    metadatas = [doc.metadata for doc in docs]
+        vectorstore = FAISS.from_embeddings(
+            text_embeddings=text_embeddings,
+            embedding=embeddings,
+            metadatas=metadatas
+        )
 
-    vectorstore = FAISS.from_embeddings(
-        text_embeddings=text_embeddings,
-        embedding=embeddings,
-        metadatas=metadatas
-    )
+        # ★ 保存！
+        vectorstore.save_local("faiss_index")
 
+    # --- LLMとQAチェーンの構築 ---
     llm = ChatOpenAI(
         model_name="gpt-4o",
         temperature=0.2,
