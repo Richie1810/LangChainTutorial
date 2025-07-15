@@ -31,11 +31,11 @@ def embed_documents_in_batches(docs, embeddings, batch_size=100, delay=30):
 def load_and_build_qa_chain():
     # --- すでに保存済みのベクトルストアがあるか確認 ---
     if os.path.exists("faiss_index"):
-    vectorstore = FAISS.load_local(
-        "faiss_index",
-        OpenAIEmbeddings(openai_api_key=api_key),
-        allow_dangerous_deserialization=True
-    )
+        vectorstore = FAISS.load_local(
+            "faiss_index",
+            OpenAIEmbeddings(openai_api_key=api_key),
+            allow_dangerous_deserialization=True
+        )
     else:
         # --- PDF ---
         pdf_documents = []
